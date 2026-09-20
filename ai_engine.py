@@ -2,6 +2,7 @@
 
 import json
 import logging
+from typing import Optional
 
 from openai import AzureOpenAI
 
@@ -10,6 +11,11 @@ import config
 
 logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = "Bạn là một trợ lý học tập thân thiện và truyền cảm hứng."
+STUDY_SYSTEM_PROMPT = (
+    "Bạn là gia sư học thuật đáng tin cậy. Hãy đọc kỹ câu hỏi và ảnh nếu có, "
+    "giải thích bằng tiếng Việt chính xác, dễ kiểm chứng. Không bịa dữ kiện; "
+    "nếu ảnh mờ hoặc thiếu đề bài, hãy nói rõ phần cần người học bổ sung."
+)
 
 
 def _fallback_reminder(subject: str) -> str:
@@ -71,3 +77,39 @@ def generate_reminder(subject: str) -> str:
         # Không log nguyên văn lỗi SDK vì có thể chứa endpoint, headers hoặc key.
         logger.warning("Không thể tạo lời nhắc AI (%s); dùng dự phòng.", type(exc).__name__)
     return fallback
+
+
+def answer_study_question(
+    question: str, image_bytes: Optional[bytes] = None, mime_type: Optional[str] = None
+) -> str:
+    """Giải thích câu hỏi học tập bằng Gemini, có thể kèm một ảnh bài tập."""
+    question = " ".join((question or "").split())
+    if not question and not image_bytes:
+        return "Bạn hãy nhập câu hỏi hoặc tải lên ảnh bài cần giải nhé."
+    if image_bytes and not mime_type:
+        return "Không xác định được định dạng ảnh. Hãy tải lại ảnh JPG, PNG hoặc WEBP."
+    try:
+        if not config.validate_gemini_config():
+            return "AI học thuật chưa được cấu hình. Hãy thêm GEMINI_API_KEY vào file .env."
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=config.GEMINI_API_KEY)
+        contents = [question or "Phân tích và giải thích nội dung trong ảnh này."]
+        if image_bytes:
+            contents.append(types.Part.from_bytes(data=image_bytes, mime_type=mime_type))
+        response = client.models.generate_content(
+            model=config.GEMINI_MODEL,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=STUDY_SYSTEM_PROMPT,
+                temperature=0.2,
+            ),
+        )
+        answer = (response.text or "").strip()
+        if answer:
+            return answer
+        logger.warning("Gemini trả về nội dung rỗng.")
+    except Exception as exc:
+        logger.warning("Không thể xử lý câu hỏi học tập (%s).", type(exc).__name__)
+    return "Mình chưa xử lý được câu hỏi lúc này. Kiểm tra cấu hình Gemini hoặc thử lại với ảnh rõ hơn."

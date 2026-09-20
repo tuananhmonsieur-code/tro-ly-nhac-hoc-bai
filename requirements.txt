@@ -1,4 +1,6 @@
 python-dotenv
 apscheduler>=3,<4
 openai
+google-genai
 plyer
+flask

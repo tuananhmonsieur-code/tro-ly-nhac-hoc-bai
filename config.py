@@ -19,6 +19,8 @@ AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "").strip()
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "").strip()
 AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "").strip()
 AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "").strip()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip() or "gemini-2.5-flash"
 
 
 def validate_config() -> bool:
@@ -64,6 +66,14 @@ def validate_config() -> bool:
             valid = False
 
     return valid
+
+
+def validate_gemini_config() -> bool:
+    """Kiểm tra cấu hình Gemini cục bộ mà không gửi key lên mạng."""
+    if not GEMINI_API_KEY:
+        logger.warning("Thiếu biến môi trường hoặc giá trị rỗng: GEMINI_API_KEY.")
+        return False
+    return True
 
 
 if __name__ == "__main__":
