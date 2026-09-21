@@ -99,7 +99,7 @@ def answer_study_question(
         if image_bytes:
             contents.append(types.Part.from_bytes(data=image_bytes, mime_type=mime_type))
         response = client.models.generate_content(
-            model=config.GEMINI_MODEL,
+            model="gemini-3.6-flash",
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=STUDY_SYSTEM_PROMPT,
@@ -111,5 +111,5 @@ def answer_study_question(
             return answer
         logger.warning("Gemini trả về nội dung rỗng.")
     except Exception as exc:
-        logger.warning("Không thể xử lý câu hỏi học tập (%s).", type(exc).__name__)
-    return "Mình chưa xử lý được câu hỏi lúc này. Kiểm tra cấu hình Gemini hoặc thử lại với ảnh rõ hơn."
+        print("LỖI CHI TIẾT TỪ GEMINI:", exc)
+        logger.warning("Không thể xử lý câu hỏi học tập (%s).", type(exc))
