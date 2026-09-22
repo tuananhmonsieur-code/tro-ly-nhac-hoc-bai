@@ -1,6 +1,6 @@
 # Trợ lý học tập local
 
-Ứng dụng có web local để hỏi bài bằng văn bản hoặc ảnh đề bài. Gemini 2.5 Flash xử lý multimodal và trả lời theo hướng gia sư học thuật; SQLite và scheduler hiện tại vẫn dùng cho lịch nhắc desktop.
+Ứng dụng có web local để hỏi bài bằng văn bản hoặc ảnh đề bài. Gemini 3.6 Flash xử lý multimodal và trả lời theo hướng gia sư học thuật; SQLite và scheduler hiện tại vẫn dùng cho lịch nhắc desktop.
 
 ## Chạy web
 
