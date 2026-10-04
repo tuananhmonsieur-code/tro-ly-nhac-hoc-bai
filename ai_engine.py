@@ -106,7 +106,7 @@ def answer_study_question(
         if image_bytes:
             contents.append(types.Part.from_bytes(data=image_bytes, mime_type=mime_type))
         response = client.models.generate_content(
-            model="gemini-3.6-flash",
+            model=config.GEMINI_MODEL,
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=STUDY_SYSTEM_PROMPT,
@@ -117,6 +117,34 @@ def answer_study_question(
         if answer:
             return answer
         logger.warning("Gemini trả về nội dung rỗng.")
+        return (
+            "AI chưa trả về nội dung lời giải. Bạn hãy thử diễn đạt lại câu hỏi "
+            "hoặc gửi ảnh đề bài rõ hơn."
+        )
     except Exception as exc:
-        print("LỖI CHI TIẾT TỪ GEMINI:", exc)
-        logger.warning("Không thể xử lý câu hỏi học tập (%s).", type(exc))
+        # Không in nguyên văn lỗi SDK: có thể chứa thông tin nhạy cảm.
+        logger.warning("Không thể xử lý câu hỏi học tập (%s).", type(exc).__name__)
+        code = str(getattr(exc, "code", ""))
+        if code in {"401", "403"}:
+            return "Gemini từ chối truy cập. Hãy kiểm tra GEMINI_API_KEY và quyền sử dụng API."
+        if code == "404":
+            return (
+                "Không tìm thấy model Gemini hoặc tài khoản chưa có quyền sử dụng. "
+                "Hãy kiểm tra GEMINI_MODEL trong cấu hình rồi khởi động lại ứng dụng."
+            )
+        if code == "429":
+            return (
+                "Gemini đang giới hạn số yêu cầu hoặc đã hết hạn mức sử dụng. "
+                "Bạn hãy thử lại sau; nếu vẫn lỗi, hãy kiểm tra hạn mức API."
+            )
+        if code == "400":
+            return (
+                "Gemini không chấp nhận yêu cầu. Hãy kiểm tra cấu hình API, model "
+                "và định dạng ảnh đề bài rồi thử lại."
+            )
+        if code in {"500", "502", "503", "504"}:
+            return "Dịch vụ Gemini đang gặp sự cố tạm thời. Bạn hãy thử lại sau."
+        return (
+            "Không lấy được lời giải từ Gemini. Hãy kiểm tra kết nối mạng "
+            "và cấu hình API rồi thử lại."
+        )
